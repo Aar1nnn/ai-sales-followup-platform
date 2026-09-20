@@ -8,9 +8,9 @@ create or replace function crm.assert_expected_version(
   p_organization_id uuid,
   p_target_type text,
   p_target_id uuid,
-  p_expected_version bigin
+  p_expected_version bigint
 )
-returns bigin
+returns bigint
 language plpgsql
 security definer
 set search_path = ''
