@@ -1,4 +1,4 @@
-# 全新 GitHub 架构仓库发布计划
+# 全新 GitHub 架构仓库发布记录
 
 ## 当前目标
 
@@ -11,10 +11,12 @@
 - 排除本地环境文件、截图、演示录屏、远程验收记录、个人账号、密码重置脚本、部署 UUID 和历史 workflow credential metadata。
 - 生成基于文件白名单的干净发布快照。
 - 经依赖审计确认旧 NestJS 兼容后端存在高风险漏洞且不在生产调用链，已从公开架构范围排除；原始本地实现保持不变。
-- 初始化全新的本地 Git 仓库，默认分支为 `main`，尚未创建远程仓库。
+- 初始化全新的本地 Git 仓库，默认分支为 `main`，并推送到全新公开远程仓库。
 - 应用 `vitest 4.1.11` 与 `nanoid 3.3.19` 安全补丁，`npm audit` 当前为 0 漏洞。
 - 通过 ESLint、Vitest（47 项）、Vite production build、n8n JSON/连接图校验、Secret 扫描、公开数据扫描和 Docker Compose 静态配置校验。
 - 通过 5 项无需数据库的 Playwright 路由与登录保护测试；6 项依赖 seeded local Supabase 的场景按测试条件跳过。
+- 已创建并推送 `Aar1nnn/ai-sales-followup-platform`，远程可见性为 public、默认分支为 `main`。
+- 远程 tree 共 171 个文件，不包含 `backend/` 或被禁止的现场证据目录；GitHub Actions 已进入队列。
 
 ## 当前决策
 
@@ -49,6 +51,6 @@
 
 ## 下一步
 
-1. 独立质量审查首个提交内容。
-2. 创建并推送新 GitHub 仓库。
-3. 远程复核仓库可见性、默认分支、文件边界和 CI 状态。
+1. 等待 GitHub Actions 完成 Edge、数据库双环境、应用和部署配置验证。
+2. 若 CI 报错，优先区分真实缺陷与外部工具版本漂移，再做最小修复。
+3. 客户部署前按开户手册配置其自有 Supabase、n8n、飞书和 AI 凭据。
