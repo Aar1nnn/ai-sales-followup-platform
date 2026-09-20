@@ -1,0 +1,11 @@
+{
+  "name": "CN-07 Daily Sales Report", "active": false,
+  "nodes": [
+    { "id": "schedule", "name": "Daily at 21", "type": "n8n-nodes-base.scheduleTrigger", "typeVersion": 1.2, "position": [0, 0], "parameters": { "rule": { "interval": [{ "field": "cronExpression", "expression": "0 21 * * *" }] } } },
+    { "id": "metrics", "name": "Read Report Metrics", "type": "n8n-nodes-base.httpRequest", "typeVersion": 4.2, "position": [220, 0], "parameters": { "method": "GET", "url": "={{ $env.SUPABASE_URL + '/rest/v1/leads?select=status,owner_member_id,created_at&created_at=gte.' + $now.startOf('day').toISO() }}", "authentication": "genericCredentialType", "genericAuthType": "httpCustomAuth" }, "credentials": { "httpCustomAuth": { "name": "Supabase Service Role (n8n only)" } } },
+    { "id": "summary", "name": "Build Deterministic Summary", "type": "n8n-nodes-base.code", "typeVersion": 2, "position": [440, 0], "parameters": { "jsCode": "const rows = $json; const counts = rows.reduce((a,r) => (a[r.status] = (a[r.status]||0)+1, a), {}); return [{ json: { text: `今日新增线索 ${rows.length} 条\\n状态分布：${Object.entries(counts).map(([k,v])=>k+': '+v).join('，') || '无'}` } }];" } },
+    { "id": "send", "name": "Send Feishu Group Report", "type": "n8n-nodes-base.httpRequest", "typeVersion": 4.2, "position": [660, 0], "parameters": { "method": "POST", "url": "={{ $env.SUPABASE_URL + '/functions/v1/channel-send' }}", "authentication": "genericCredentialType", "genericAuthType": "httpHeaderAuth", "sendBody": true, "contentType": "raw", "rawContentType": "application/json", "body": "={{ JSON.stringify({ connection_id: $vars.FEISHU_CONNECTION_ID, action: 'internal_notification', payload: { feishu_chat_id: $vars.FEISHU_REPORT_CHAT_ID, text: $json.text } }) }}" }, "credentials": { "httpHeaderAuth": { "name": "N8N Internal Edge Secret" } } }
+  ],
+  "connections": { "Daily at 21": { "main": [[{ "node": "Read Report Metrics", "type": "main", "index": 0 }]] }, "Read Report Metrics": { "main": [[{ "node": "Build Deterministic Summary", "type": "main", "index": 0 }]] }, "Build Deterministic Summary": { "main": [[{ "node": "Send Feishu Group Report", "type": "main", "index": 0 }]] } },
+  "settings": { "executionOrder": "v1", "timezone": "Asia/Shanghai" }, "meta": { "templateVersion": "china-standard-v1" }, "tags": [{ "name": "china-standard-v1" }]
+}

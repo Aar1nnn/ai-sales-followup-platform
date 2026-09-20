@@ -1,0 +1,10 @@
+{
+  "name": "CN-10 Global Error Handler", "active": false,
+  "nodes": [
+    { "id": "trigger", "name": "Workflow Error", "type": "n8n-nodes-base.errorTrigger", "typeVersion": 1, "position": [0, 0], "parameters": {} },
+    { "id": "sanitize", "name": "Sanitize Failure", "type": "n8n-nodes-base.code", "typeVersion": 2, "position": [240, 0], "parameters": { "jsCode": "const e = $json.execution || {}; const w = $json.workflow || {}; return [{ json: { workflow_key: w.name || 'unknown', external_execution_id: String(e.id || ''), error_code: 'N8N_EXECUTION_FAILED', error_message: String(e.error?.message || 'Unknown failure').slice(0, 1000), outbox_event_id: e.data?.resultData?.runData?.['From Dispatcher']?.[0]?.data?.main?.[0]?.[0]?.json?.id || null } }];" } },
+    { "id": "log", "name": "Log Automation Failure", "type": "n8n-nodes-base.httpRequest", "typeVersion": 4.2, "position": [480, 0], "parameters": { "method": "POST", "url": "={{ $env.SUPABASE_URL + '/rest/v1/rpc/log_automation_failure' }}", "authentication": "genericCredentialType", "genericAuthType": "httpCustomAuth", "sendBody": true, "contentType": "raw", "rawContentType": "application/json", "body": "={{ JSON.stringify({ p_organization_id: $vars.PRIMARY_ORGANIZATION_ID, p_workflow_key: $json.workflow_key, p_external_execution_id: $json.external_execution_id, p_outbox_event_id: $json.outbox_event_id, p_error_code: $json.error_code, p_error_message: $json.error_message }) }}" }, "credentials": { "httpCustomAuth": { "name": "Supabase Service Role (n8n only)" } } }
+  ],
+  "connections": { "Workflow Error": { "main": [[{ "node": "Sanitize Failure", "type": "main", "index": 0 }]] }, "Sanitize Failure": { "main": [[{ "node": "Log Automation Failure", "type": "main", "index": 0 }]] } },
+  "settings": { "executionOrder": "v1" }, "meta": { "templateVersion": "china-standard-v1", "secretLogging": false }, "tags": [{ "name": "china-standard-v1" }]
+}

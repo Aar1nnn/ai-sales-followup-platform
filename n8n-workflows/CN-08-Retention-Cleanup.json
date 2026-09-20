@@ -1,0 +1,9 @@
+{
+  "name": "CN-08 Retention Cleanup", "active": false,
+  "nodes": [
+    { "id": "schedule", "name": "Daily Retention", "type": "n8n-nodes-base.scheduleTrigger", "typeVersion": 1.2, "position": [0, 0], "parameters": { "rule": { "interval": [{ "field": "cronExpression", "expression": "30 2 * * *" }] } } },
+    { "id": "cleanup", "name": "Run Controlled Retention RPC", "type": "n8n-nodes-base.httpRequest", "typeVersion": 4.2, "position": [260, 0], "parameters": { "method": "POST", "url": "={{ $env.SUPABASE_URL + '/rest/v1/rpc/run_retention_cleanup' }}", "authentication": "genericCredentialType", "genericAuthType": "httpCustomAuth", "sendBody": true, "contentType": "raw", "rawContentType": "application/json", "body": "{\"p_batch_size\":500}" }, "credentials": { "httpCustomAuth": { "name": "Supabase Service Role (n8n only)" } } }
+  ],
+  "connections": { "Daily Retention": { "main": [[{ "node": "Run Controlled Retention RPC", "type": "main", "index": 0 }]] } },
+  "settings": { "executionOrder": "v1", "timezone": "Asia/Shanghai" }, "meta": { "templateVersion": "china-standard-v1", "rawPayloadDays": 90, "auditDays": 365 }, "tags": [{ "name": "china-standard-v1" }]
+}

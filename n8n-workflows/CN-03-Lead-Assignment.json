@@ -1,0 +1,10 @@
+{
+  "name": "CN-03 Lead Assignment", "active": false,
+  "nodes": [
+    { "id": "trigger", "name": "From Dispatcher", "type": "n8n-nodes-base.executeWorkflowTrigger", "typeVersion": 1.1, "position": [0, 0], "parameters": {} },
+    { "id": "build", "name": "Build Assignment Command", "type": "n8n-nodes-base.code", "typeVersion": 2, "position": [240, 0], "parameters": { "jsCode": "const e = $json; return [{ json: { command_id: e.id, idempotency_key: 'assign:' + e.id, command_name: 'assign_lead', organization_id: e.organization_id, actor_user_id: $env.SYSTEM_ACTOR_USER_ID, target_type: 'lead', target_id: e.aggregate_id, expected_version: null, source: 'n8n', occurred_at: new Date().toISOString(), payload: {} } }];" } },
+    { "id": "command", "name": "Assign via Command", "type": "n8n-nodes-base.httpRequest", "typeVersion": 4.2, "position": [480, 0], "parameters": { "method": "POST", "url": "={{ $env.SUPABASE_URL + '/functions/v1/execute-command' }}", "authentication": "genericCredentialType", "genericAuthType": "httpHeaderAuth", "sendBody": true, "contentType": "raw", "rawContentType": "application/json", "body": "={{ JSON.stringify($json) }}" }, "credentials": { "httpHeaderAuth": { "name": "N8N Internal Edge Secret" } } }
+  ],
+  "connections": { "From Dispatcher": { "main": [[{ "node": "Build Assignment Command", "type": "main", "index": 0 }]] }, "Build Assignment Command": { "main": [[{ "node": "Assign via Command", "type": "main", "index": 0 }]] } },
+  "settings": { "executionOrder": "v1" }, "meta": { "templateVersion": "china-standard-v1" }, "tags": [{ "name": "china-standard-v1" }]
+}

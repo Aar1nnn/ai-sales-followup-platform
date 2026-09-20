@@ -1,0 +1,158 @@
+{
+  "name": "CN-05 Feishu Internal Notification",
+  "active": false,
+  "nodes": [
+    {
+      "id": "trigger",
+      "name": "From Dispatcher",
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.1,
+      "position": [0, 0],
+      "parameters": {}
+    },
+    {
+      "id": "lead",
+      "name": "Read Lead and Owner",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [220, 0],
+      "alwaysOutputData": true,
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $env.SUPABASE_URL + '/rest/v1/leads?id=eq.' + ($json.aggregate_type === 'task' ? $json.payload.lead_id : $json.aggregate_id) + '&select=id,public_id,organization_id,need,owner_member_id,version,contacts(full_name)&limit=1' }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpCustomAuth"
+      },
+      "credentials": {
+        "httpCustomAuth": {
+          "name": "Supabase Service Role (n8n only)"
+        }
+      }
+    },
+    {
+      "id": "ensure-lead",
+      "name": "Ensure Assigned Lead",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [440, 0],
+      "parameters": {
+        "jsCode": "const lead = $input.first().json;\nif (!lead?.id || !lead.organization_id) throw new Error('LEAD_NOT_FOUND');\nif (!lead.owner_member_id) throw new Error('LEAD_OWNER_REQUIRED');\nreturn [{ json: lead }];"
+      }
+    },
+    {
+      "id": "identity",
+      "name": "Read Verified Feishu Identity",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [660, 0],
+      "alwaysOutputData": true,
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $env.SUPABASE_URL + '/rest/v1/organization_member_channel_identities?organization_id=eq.' + $json.organization_id + '&member_id=eq.' + $json.owner_member_id + '&provider=eq.feishu_internal&status=eq.verified&select=feishu_open_id&limit=1' }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpCustomAuth"
+      },
+      "credentials": {
+        "httpCustomAuth": {
+          "name": "Supabase Service Role (n8n only)"
+        }
+      }
+    },
+    {
+      "id": "ensure-identity",
+      "name": "Ensure Verified Feishu Identity",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [880, 0],
+      "parameters": {
+        "jsCode": "const identity = $input.first().json;\nif (!identity?.feishu_open_id) throw new Error('FEISHU_IDENTITY_NOT_VERIFIED');\nreturn [{ json: identity }];"
+      }
+    },
+    {
+      "id": "connection",
+      "name": "Read Active Feishu Connection",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1100, 0],
+      "alwaysOutputData": true,
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $env.SUPABASE_URL + '/rest/v1/channel_connections?organization_id=eq.' + $('Ensure Assigned Lead').first().json.organization_id + '&provider=eq.feishu_internal&status=eq.active&select=id&order=created_at.asc&limit=1' }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpCustomAuth"
+      },
+      "credentials": {
+        "httpCustomAuth": {
+          "name": "Supabase Service Role (n8n only)"
+        }
+      }
+    },
+    {
+      "id": "ensure-connection",
+      "name": "Ensure Active Feishu Connection",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1320, 0],
+      "parameters": {
+        "jsCode": "const connection = $input.first().json;\nif (!connection?.id) throw new Error('FEISHU_CONNECTION_NOT_CONFIGURED');\nreturn [{ json: connection }];"
+      }
+    },
+    {
+      "id": "send",
+      "name": "Send Feishu Card",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1540, 0],
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.SUPABASE_URL + '/functions/v1/channel-send' }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={{ (() => { const lead = $('Ensure Assigned Lead').first().json; const identity = $('Ensure Verified Feishu Identity').first().json; const value = (command_name, payload = {}) => ({ command_name, target_type: 'lead', target_id: lead.id, expected_version: lead.version, payload }); return JSON.stringify({ connection_id: $json.id, action: 'internal_notification', payload: { feishu_open_id: identity.feishu_open_id, card: { config: { wide_screen_mode: true }, header: { template: 'blue', title: { tag: 'plain_text', content: '新线索待跟进 · ' + lead.public_id } }, elements: [{ tag: 'div', text: { tag: 'lark_md', content: '**客户：**' + (lead.contacts?.full_name || '待补充') + '\\n**需求：**' + (lead.need || '待补充') + '\\n请在 60 分钟内跟进。' } }, { tag: 'action', actions: [{ tag: 'button', type: 'primary', text: { tag: 'plain_text', content: '接受线索' }, value: value('accept_lead') }, { tag: 'button', text: { tag: 'plain_text', content: '确认收到' }, value: value('acknowledge_lead') }, { tag: 'button', text: { tag: 'plain_text', content: '24 小时后跟进' }, value: value('schedule_follow_up', { due_at: new Date(Date.now() + 86400000).toISOString(), title: '客户跟进' }) }] }, { tag: 'action', actions: [{ tag: 'button', type: 'primary', text: { tag: 'plain_text', content: '打开 CRM 详情' }, url: $env.CRM_APP_URL + '/leads/' + lead.id }] }] } } }); })() }}"
+      },
+      "credentials": {
+        "httpHeaderAuth": {
+          "name": "N8N Internal Edge Secret"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "From Dispatcher": {
+      "main": [[{ "node": "Read Lead and Owner", "type": "main", "index": 0 }]]
+    },
+    "Read Lead and Owner": {
+      "main": [[{ "node": "Ensure Assigned Lead", "type": "main", "index": 0 }]]
+    },
+    "Ensure Assigned Lead": {
+      "main": [[{ "node": "Read Verified Feishu Identity", "type": "main", "index": 0 }]]
+    },
+    "Read Verified Feishu Identity": {
+      "main": [[{ "node": "Ensure Verified Feishu Identity", "type": "main", "index": 0 }]]
+    },
+    "Ensure Verified Feishu Identity": {
+      "main": [[{ "node": "Read Active Feishu Connection", "type": "main", "index": 0 }]]
+    },
+    "Read Active Feishu Connection": {
+      "main": [[{ "node": "Ensure Active Feishu Connection", "type": "main", "index": 0 }]]
+    },
+    "Ensure Active Feishu Connection": {
+      "main": [[{ "node": "Send Feishu Card", "type": "main", "index": 0 }]]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "meta": {
+    "templateVersion": "china-standard-v1",
+    "externalSendRequiresValidatedConnection": true
+  },
+  "tags": [
+    {
+      "name": "china-standard-v1"
+    }
+  ]
+}

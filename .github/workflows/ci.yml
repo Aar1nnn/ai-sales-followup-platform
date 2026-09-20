@@ -1,0 +1,71 @@
+name: china-standard-v1-ci
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  application:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0 }
+      - uses: actions/setup-node@v4
+        with: { node-version: 24, cache: npm }
+      - run: npm ci
+      - run: npm run check
+      - run: npx playwright install --with-deps chromium
+      - run: npm run test:e2e
+
+  edge:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: denoland/setup-deno@v2
+        with: { deno-version: v2.x }
+      - run: deno fmt --check supabase/functions
+      - run: deno check supabase/functions/*/index.ts
+      - run: deno test --allow-env supabase/functions/tests
+
+  database:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 24, cache: npm }
+      - run: npm ci
+      - name: Fresh database pass 1
+        run: npx supabase start && npx supabase test db
+      - name: Remove disposable environment
+        if: always()
+        run: npx supabase stop --no-backup
+      - name: Fresh database pass 2
+        run: npx supabase start && npx supabase test db
+      - name: Stop disposable environment
+        if: always()
+        run: npx supabase stop --no-backup
+
+  deployment-config:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate compose expansion
+        working-directory: deploy
+        env:
+          VITE_SUPABASE_URL: https://example.supabase.co
+          VITE_SUPABASE_PUBLISHABLE_KEY: publishable-placeholder
+          N8N_IMAGE: docker.n8n.io/n8nio/n8n:approved-version
+          N8N_DB_PASSWORD: ci-placeholder-not-a-production-secret
+          N8N_ENCRYPTION_KEY: ci-placeholder-not-a-production-secret
+          N8N_HOST: n8n.example.test
+          SUPABASE_URL: https://example.supabase.co
+          CRM_APP_URL: https://crm.example.test
+          SYSTEM_ACTOR_USER_ID: 00000000-0000-0000-0000-000000000000
+          AI_BASE_URL: https://example.invalid/v1
+        run: docker compose config --quiet
+      - name: Verify Nginx configuration
+        run: docker run --rm -v "$PWD/deploy/nginx.conf:/etc/nginx/conf.d/default.conf:ro" nginx:1.27-alpine nginx -t

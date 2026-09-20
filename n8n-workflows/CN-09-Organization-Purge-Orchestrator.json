@@ -1,0 +1,11 @@
+{
+  "name": "CN-09 Organization Purge Orchestrator", "active": false,
+  "nodes": [
+    { "id": "schedule", "name": "Hourly Purge Check", "type": "n8n-nodes-base.scheduleTrigger", "typeVersion": 1.2, "position": [0, 0], "parameters": { "rule": { "interval": [{ "field": "hours", "hoursInterval": 1 }] } } },
+    { "id": "jobs", "name": "Read Due Purge Jobs", "type": "n8n-nodes-base.httpRequest", "typeVersion": 4.2, "position": [220, 0], "parameters": { "method": "GET", "url": "={{ $env.SUPABASE_URL + '/rest/v1/organization_purge_jobs?scheduled_at=lte.' + $now.toISO() + '&status=in.(scheduled,failed,running)&select=organization_id,status,current_phase' }}", "authentication": "genericCredentialType", "genericAuthType": "httpCustomAuth" }, "credentials": { "httpCustomAuth": { "name": "Supabase Service Role (n8n only)" } } },
+    { "id": "split", "name": "Split Jobs", "type": "n8n-nodes-base.code", "typeVersion": 2, "position": [440, 0], "parameters": { "jsCode": "return $json.map(job => ({ json: job }));" } },
+    { "id": "purge", "name": "Run One Purge Step", "type": "n8n-nodes-base.httpRequest", "typeVersion": 4.2, "position": [660, 0], "parameters": { "method": "POST", "url": "={{ $env.SUPABASE_URL + '/functions/v1/purge-organization' }}", "authentication": "genericCredentialType", "genericAuthType": "httpHeaderAuth", "sendBody": true, "contentType": "raw", "rawContentType": "application/json", "body": "={{ JSON.stringify({ organization_id: $json.organization_id, batch_size: 500 }) }}" }, "credentials": { "httpHeaderAuth": { "name": "N8N Internal Edge Secret" } } }
+  ],
+  "connections": { "Hourly Purge Check": { "main": [[{ "node": "Read Due Purge Jobs", "type": "main", "index": 0 }]] }, "Read Due Purge Jobs": { "main": [[{ "node": "Split Jobs", "type": "main", "index": 0 }]] }, "Split Jobs": { "main": [[{ "node": "Run One Purge Step", "type": "main", "index": 0 }]] } },
+  "settings": { "executionOrder": "v1", "timezone": "Asia/Shanghai" }, "meta": { "templateVersion": "china-standard-v1", "deletionGraceDays": 30 }, "tags": [{ "name": "china-standard-v1" }]
+}

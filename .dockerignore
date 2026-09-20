@@ -1,0 +1,13 @@
+.gi
+.github
+.env*
+!.env.example
+backend
+dis
+docs
+n8n-workflows
+node_modules
+playwright-repor
+supabase
+test-results
+tests

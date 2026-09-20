@@ -1,0 +1,9 @@
+{
+  "name": "CN-06 Follow-up Reminder Enqueuer", "active": false,
+  "nodes": [
+    { "id": "schedule", "name": "Every Fifteen Minutes", "type": "n8n-nodes-base.scheduleTrigger", "typeVersion": 1.2, "position": [0, 0], "parameters": { "rule": { "interval": [{ "field": "minutes", "minutesInterval": 15 }] } } },
+    { "id": "enqueue", "name": "Enqueue Due Reminder Events", "type": "n8n-nodes-base.httpRequest", "typeVersion": 4.2, "position": [260, 0], "parameters": { "method": "POST", "url": "={{ $env.SUPABASE_URL + '/rest/v1/rpc/enqueue_due_automation_events' }}", "authentication": "genericCredentialType", "genericAuthType": "httpCustomAuth", "sendBody": true, "contentType": "raw", "rawContentType": "application/json", "body": "{\"p_limit\":100}" }, "credentials": { "httpCustomAuth": { "name": "Supabase Service Role (n8n only)" } } }
+  ],
+  "connections": { "Every Fifteen Minutes": { "main": [[{ "node": "Enqueue Due Reminder Events", "type": "main", "index": 0 }]] } },
+  "settings": { "executionOrder": "v1", "timezone": "Asia/Shanghai" }, "meta": { "templateVersion": "china-standard-v1" }, "tags": [{ "name": "china-standard-v1" }]
+}

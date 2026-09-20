@@ -1,0 +1,49 @@
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+node_modules
+.npm-cache
+dist
+dist-ssr
+*.local
+playwright-report
+test-results
+supabase/.temp
+supabase/.branches
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+
+.env
+.env.*
+!.env.example
+!deploy/.env.example
+
+# Generated local n8n secrets. Keep the example file tracked.
+deploy/.env.n8n.local
+!deploy/n8n-local.env.example
+
+# The deprecated NestJS reference implementation is intentionally excluded
+# from the architecture release. Supabase Edge Functions are the production backend.
+backend/
+
+# Public repository boundary: local evidence and deployment history stay out.
+picture/
+docs/demo/
+n8n-workflows/archive/
+coverage/
