@@ -16,7 +16,9 @@ export function adminClient(): SupabaseClient {
   }
   return createClient(url, serviceRoleKey, {
     auth: { autoRefreshToken: false, persistSession: false },
-    global: { headers: { "x-client-info": "ai-sales-followup-platform-edge-v1" } },
+    global: {
+      headers: { "x-client-info": "ai-sales-followup-platform-edge-v1" },
+    },
   });
 }
 

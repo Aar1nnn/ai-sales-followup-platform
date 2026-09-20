@@ -42,15 +42,15 @@
 - 已通过：5 项 Playwright 路由与登录保护测试。
 - 已通过：`docker compose ... config --quiet` 静态校验。
 - 已通过：`npm audit --audit-level=low`，0 漏洞。
-- 未执行：Deno Edge 检查与测试，本机未安装 `deno`。
+- 已通过：Deno 2 `fmt --check`、7 个 Edge 入口类型检查和 10 项 Edge 契约测试。
 - 未执行：依赖 seeded local Supabase 的 6 项 Playwright 场景和 pgTAP 数据库测试。
 
 ## 已知问题
 
-- 完整数据库 pgTAP、Authenticated Playwright 和 Edge Deno 测试仍由 CI 或安装完整本地工具链后执行。
+- 完整数据库 pgTAP 与 Authenticated Playwright 仍由 CI 或安装完整本地 Supabase 工具链后执行。
 
 ## 下一步
 
-1. 等待 GitHub Actions 完成 Edge、数据库双环境、应用和部署配置验证。
+1. 等待修复推送后的 GitHub Actions 完成 Edge、数据库双环境、应用和部署配置验证。
 2. 若 CI 报错，优先区分真实缺陷与外部工具版本漂移，再做最小修复。
 3. 客户部署前按开户手册配置其自有 Supabase、n8n、飞书和 AI 凭据。
