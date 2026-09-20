@@ -12,7 +12,7 @@
 
 ## 实施顺序
 
-1. 在客户 Supabase 顺序执行 `001`–`012` migration，不运行 `supabase/seed.sql`。
+1. 在客户 Supabase 顺序执行 `001`–`017` migration，不运行 `supabase/seed.sql`。
 2. 创建 Edge Secrets：`SUPABASE_URL`、`SUPABASE_SERVICE_ROLE_KEY`、`N8N_INTERNAL_SECRET`、`SYSTEM_ACTOR_USER_ID`、`ALLOWED_ORIGINS`、`PURGE_STORAGE_BUCKETS`、`MEMBER_INVITE_REDIRECT_URL`。
 3. 创建 Owner Auth 用户后运行 `npm run bootstrap`；记录 organization ID 和 Owner member ID。
 4. 配置 Supabase Auth 的正式 Site URL、允许的回调地址、邮箱确认和客户 SMTP；完成注册、邀请、密码找回三类邮件验收。

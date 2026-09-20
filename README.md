@@ -65,7 +65,7 @@ npx.cmd supabase test db
 
 ## 目录
 
-- `supabase/migrations/`：`001`–`011` 全新 baseline，`012` 增加成员管理与运维命令，`013` 修正评分函数 volatility，`014` 增加登录用户手工 Intake。
+- `supabase/migrations/`：`001`–`017` 顺序 migration，覆盖 baseline、成员运维、手工 Intake、受控自动化和浏览器写权限收口。
 - `supabase/functions/`：Command、Intake、Provider、飞书与 Purge Edge Functions。
 - `supabase/tests/`：Schema、评分、RLS 和事务 pgTAP。
 - `n8n-workflows/`：10 个默认关闭的中国版 workflow 模板。

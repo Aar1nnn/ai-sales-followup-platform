@@ -35,6 +35,38 @@ insert into public.organization_members (id, organization_id, user_id, role, sta
   ('bb000000-0000-0000-0000-000000000001', 'bbbbbbbb-0000-0000-0000-000000000001', '20000000-0000-0000-0000-000000000001', 'owner', 'active', now())
 on conflict (id) do nothing;
 
+-- Production bootstrap calls crm.ensure_authenticated_manual_source after it
+-- creates the organization. Development seed mirrors that state explicitly
+-- because migrations run before these fictional organizations exist.
+insert into public.lead_source_connections (
+  id, public_id, organization_id, provider, name, status, external_source_id,
+  mapping, settings, rate_limit_per_minute, max_payload_bytes,
+  created_by_member_id, validated_at
+) values
+  (
+    'aa800000-0000-0000-0000-000000000001', 'manual-source-example-org-a',
+    'aaaaaaaa-0000-0000-0000-000000000001', 'internal_manual', 'CRM 手工录入',
+    'active', 'crm-manual-entry-v1', '{}'::jsonb,
+    '{"authenticated_manual":true,"verified_identity_fields":[]}'::jsonb,
+    120, 32768, 'aa000000-0000-0000-0000-000000000001', now()
+  ),
+  (
+    'bb800000-0000-0000-0000-000000000001', 'manual-source-example-org-b',
+    'bbbbbbbb-0000-0000-0000-000000000001', 'internal_manual', 'CRM 手工录入',
+    'active', 'crm-manual-entry-v1', '{}'::jsonb,
+    '{"authenticated_manual":true,"verified_identity_fields":[]}'::jsonb,
+    120, 32768, 'bb000000-0000-0000-0000-000000000001', now()
+  )
+on conflict (organization_id, provider, external_source_id) do update set
+  name = excluded.name,
+  status = excluded.status,
+  mapping = excluded.mapping,
+  settings = excluded.settings,
+  rate_limit_per_minute = excluded.rate_limit_per_minute,
+  max_payload_bytes = excluded.max_payload_bytes,
+  created_by_member_id = excluded.created_by_member_id,
+  validated_at = excluded.validated_at;
+
 insert into public.organization_assignment_settings (organization_id, updated_by_member_id) values
   ('aaaaaaaa-0000-0000-0000-000000000001', 'aa000000-0000-0000-0000-000000000001'),
   ('bbbbbbbb-0000-0000-0000-000000000001', 'bb000000-0000-0000-0000-000000000001')
