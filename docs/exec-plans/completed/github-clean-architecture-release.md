@@ -16,7 +16,7 @@
 - 通过 ESLint、Vitest（47 项）、Vite production build、n8n JSON/连接图校验、Secret 扫描、公开数据扫描和 Docker Compose 静态配置校验。
 - 通过 5 项无需数据库的 Playwright 路由与登录保护测试；6 项依赖 seeded local Supabase 的场景按测试条件跳过。
 - 已创建并推送 `Aar1nnn/ai-sales-followup-platform`，远程可见性为 public、默认分支为 `main`。
-- 远程 tree 共 171 个文件，不包含 `backend/` 或被禁止的现场证据目录；GitHub Actions 已进入队列。
+- 远程 tree 共 172 个文件，不包含 `backend/` 或被禁止的现场证据目录。
 - 远程 CI 在两套全新 Supabase 环境中分别完成 17 个 migration 和 125 项 pgTAP；应用、Edge、数据库与部署配置四个 job 全部通过。
 - 根据 GitHub 官方最新发布将 `actions/checkout`、`actions/setup-node` 升级到 v7，并将 runner 固定为 `ubuntu-24.04`。
 
