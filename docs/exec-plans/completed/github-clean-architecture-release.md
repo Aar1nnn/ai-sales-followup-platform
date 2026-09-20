@@ -17,6 +17,8 @@
 - 通过 5 项无需数据库的 Playwright 路由与登录保护测试；6 项依赖 seeded local Supabase 的场景按测试条件跳过。
 - 已创建并推送 `Aar1nnn/ai-sales-followup-platform`，远程可见性为 public、默认分支为 `main`。
 - 远程 tree 共 171 个文件，不包含 `backend/` 或被禁止的现场证据目录；GitHub Actions 已进入队列。
+- 远程 CI 在两套全新 Supabase 环境中分别完成 17 个 migration 和 125 项 pgTAP；应用、Edge、数据库与部署配置四个 job 全部通过。
+- 根据 GitHub 官方最新发布将 `actions/checkout`、`actions/setup-node` 升级到 v7，并将 runner 固定为 `ubuntu-24.04`。
 
 ## 当前决策
 
@@ -43,14 +45,14 @@
 - 已通过：`docker compose ... config --quiet` 静态校验。
 - 已通过：`npm audit --audit-level=low`，0 漏洞。
 - 已通过：Deno 2 `fmt --check`、7 个 Edge 入口类型检查和 10 项 Edge 契约测试。
-- 未执行：依赖 seeded local Supabase 的 6 项 Playwright 场景和 pgTAP 数据库测试。
+- 已通过：两套 disposable Supabase 环境，17 个 migration、development seed 和每套 125 项 pgTAP。
+- 未执行：需要同一进程保留 seeded Supabase 的 6 项 Authenticated Playwright 场景。
 
 ## 已知问题
 
-- 完整数据库 pgTAP 与 Authenticated Playwright 仍由 CI 或安装完整本地 Supabase 工具链后执行。
+- Authenticated Playwright 仍需在同一 runner 中同时启动 seeded Supabase 与前端；当前 CI 仅覆盖 5 项未登录路由场景。
 
 ## 下一步
 
-1. 等待修复推送后的 GitHub Actions 完成 Edge、数据库双环境、应用和部署配置验证。
-2. 若 CI 报错，优先区分真实缺陷与外部工具版本漂移，再做最小修复。
-3. 客户部署前按开户手册配置其自有 Supabase、n8n、飞书和 AI 凭据。
+1. 客户部署前按开户手册配置其自有 Supabase、n8n、飞书和 AI 凭据。
+2. 后续将 6 项 Authenticated Playwright 场景接入同一套临时 Supabase runner。
